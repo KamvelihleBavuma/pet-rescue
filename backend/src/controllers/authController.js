@@ -1,13 +1,10 @@
 import pool from "../config/db.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { ENV } from "../config/env.js";
+import { genToken } from "../config/genToken.js";
 
-// ------------------ SIGNUP ------------------
 export const signupUser = async (req, res) => {
   const { username, password, firstName, lastName, email } = req.body;
 
-  // ✅ Basic input validation
   if (![username, password, firstName, lastName, email].every(Boolean)) {
     return res.status(400).json({
       success: false,
@@ -31,10 +28,16 @@ export const signupUser = async (req, res) => {
       ],
     );
 
+    const newUserId = userResult.insertId;
+
+    // ✅ Issue token immediately so user stays logged in
+    const token = genToken(res, newUserId);
+
     return res.status(201).json({
       success: true,
       message: "Student account created successfully",
-      userId: userResult.insertId,
+      userId: newUserId,
+      token,
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -53,7 +56,6 @@ export const signupUser = async (req, res) => {
   }
 };
 
-// ------------------ LOGIN ------------------
 export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
@@ -79,15 +81,7 @@ export const loginUser = async (req, res) => {
 
     const user = rows[0];
 
-    if (!user.PASSWORD_HASH) {
-      console.error("DB row missing password_hash:", user);
-      return res.status(500).json({
-        success: false,
-        message: "Server error: password field missing",
-      });
-    }
     const match = await bcrypt.compare(password, user.PASSWORD_HASH);
-
     if (!match) {
       return res.status(401).json({
         success: false,
@@ -95,12 +89,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // ✅ Include role in token
-    const token = jwt.sign(
-      { id: user.PERSON_ID, username: user.USERNAME },
-      ENV.JWT_SECRET,
-      { expiresIn: "1h" },
-    );
+    const token = genToken(res, user.PERSON_ID);
 
     return res.json({
       success: true,
@@ -113,5 +102,33 @@ export const loginUser = async (req, res) => {
       success: false,
       message: "Error logging in",
     });
+  }
+};
+
+export const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token");
+    return res.json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error logging out",
+    });
+  }
+};
+
+export const checkAuth = async (req, res) => {
+  try {
+    res.status(200).json({
+      message: "user is logged in",
+      user: req.user,
+    });
+  } catch (error) {
+    console.log("Error in loginUser", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
