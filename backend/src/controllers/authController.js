@@ -44,6 +44,12 @@ export const signupUser = async (req, res) => {
       ]);
     }
 
+    if (role.toUpperCase() === "PET_OWNER") {
+      await pool.query(`INSERT INTO pet_owners (person_id) VALUES (?)`, [
+        newUserId,
+      ]);
+    }
+
     if (role.toUpperCase() === "ADMIN") {
       await pool.query(`INSERT INTO itadmins (person_id) VALUES (?)`, [
         newUserId,
