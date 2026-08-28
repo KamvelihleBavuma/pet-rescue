@@ -17,16 +17,18 @@
 
 # ITADMIN - OF A CERTAIN ORG
 
-- [ ] registers a manager
-- [ ] registers a rescue operator
-- [ ] registers a manager
+- [x] registers a manager
+- [x] registers a rescue operator
+- [x] admin profile
 
 # MANAGER - OF A CERTAIN ORG
 
 - [ ] views all rescue operators of an org
 - [ ] assigns a rescue operator only to that org to a certain task
-- [] views all org tasks/reports
+- [ ] views all org tasks/reports
+- [x] manager profile
 
 # RESCUE OPERATOR
 
 - [ ] complete tasks offered and updates status
+- [x] rescue operator profile

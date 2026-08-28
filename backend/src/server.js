@@ -8,8 +8,7 @@ import { ENV } from "./config/env.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import managerRoutes from "./routes/managerRoutes.js";
-import staffRoutes from "./routes/rescueCoordinatorRoutes.js"
-
+import staffRoutes from "./routes/rescueCoordinatorRoutes.js";
 
 const app = express();
 const { PORT } = ENV;

@@ -19,6 +19,7 @@
 
 ## IT ADMIN (ORG LEVEL)
 
+- [x] `GET /admin/profile` → get admin profile
 - [x] `POST /auth/manager/:personId` → Register a manager
 - [x] `POST /auth/register-rescue-coordinator/:personId` → Register a rescue operator
 - [ ] `GET /orgs/:orgId/reports` → View all org reports
@@ -27,11 +28,13 @@
 
 ## MANAGER (ORG LEVEL)
 
+- [x] `GET /manager/profile` → get manager profile
 - [ ] `GET /orgs/:orgId/rescue-operators` → View all rescue operators of an org
 - [ ] `POST /orgs/:orgId/tasks` → Assign a rescue operator to a task
 - [ ] `GET /orgs/:orgId/tasks` → View all org tasks/reports
 
 ## RESCUE OPERATOR
 
+- [x] `GET /staff/profile` → get rescue operator profile
 - [ ] `PUT /tasks/:taskId/status` → Complete task and update status
 - [ ] `GET /tasks/:taskId` → View assigned task details
