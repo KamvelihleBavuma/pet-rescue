@@ -14,9 +14,9 @@ export const protectAuth = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, ENV.JWT_SECRET);
 
-    // Fetch user from DB (optional, but useful if you want user info)
+    // Fetch person
     const [rows] = await pool.query(
-      "SELECT PERSON_ID, USERNAME, EMAIL FROM persons WHERE PERSON_ID = ?",
+      "SELECT PERSON_ID, USERNAME, EMAIL, ROLE FROM persons WHERE PERSON_ID = ?",
       [decoded.id],
     );
 
@@ -26,8 +26,31 @@ export const protectAuth = async (req, res, next) => {
         .json({ success: false, message: "User not found" });
     }
 
+    let user = rows[0];
+
+    // Attach org ID if role requires it
+    if (user.ROLE === "ITADMIN") {
+      const [adminRows] = await pool.query(
+        "SELECT NPO_SPCA_ID FROM itadmin WHERE PERSON_ID = ?",
+        [user.PERSON_ID],
+      );
+      if (adminRows.length > 0) user.NPO_SPCA_ID = adminRows[0].NPO_SPCA_ID;
+    } else if (user.ROLE === "MANAGER") {
+      const [managerRows] = await pool.query(
+        "SELECT NPO_SPCA_ID FROM managers WHERE PERSON_ID = ?",
+        [user.PERSON_ID],
+      );
+      if (managerRows.length > 0) user.NPO_SPCA_ID = managerRows[0].NPO_SPCA_ID;
+    } else if (user.ROLE === "RESCUE_COORDINATOR") {
+      const [rcRows] = await pool.query(
+        "SELECT NPO_SPCA_ID FROM rescue_coordinators WHERE PERSON_ID = ?",
+        [user.PERSON_ID],
+      );
+      if (rcRows.length > 0) user.NPO_SPCA_ID = rcRows[0].NPO_SPCA_ID;
+    }
+
     // Attach user to request
-    req.user = rows[0];
+    req.user = user;
 
     next();
   } catch (err) {

@@ -20,10 +20,11 @@
 - [x] registers a manager
 - [x] registers a rescue operator
 - [x] admin profile
+- [x] views all staff of an org
 
 # MANAGER - OF A CERTAIN ORG
 
-- [ ] views all rescue operators of an org
+- [x] views all rescue operators of an org
 - [ ] assigns a rescue operator only to that org to a certain task
 - [ ] views all org tasks/reports
 - [x] manager profile

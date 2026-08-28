@@ -36,3 +36,50 @@ export const getAdminProfile = async (req, res) => {
     });
   }
 };
+
+export const getMyORGManagersNdStaff = async (req, res) => {
+  try {
+    const orgId = req.user.NPO_SPCA_ID; // comes from protectITAdmin middleware
+
+    if (!orgId) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization ID not found for current user",
+      });
+    }
+
+    // Fetch managers
+    const [managers] = await pool.query(
+      `SELECT p.PERSON_ID, p.FIRST_NAME, p.LAST_NAME, p.USERNAME, p.EMAIL, p.ROLE,
+              m.MANAGER_ID, m.NPO_SPCA_ID
+       FROM persons p
+       JOIN managers m ON p.PERSON_ID = m.PERSON_ID
+       WHERE m.NPO_SPCA_ID = ?`,
+      [orgId],
+    );
+
+    // Fetch rescue coordinators
+    const [rescueCoordinators] = await pool.query(
+      `SELECT p.PERSON_ID, p.FIRST_NAME, p.LAST_NAME, p.USERNAME, p.EMAIL, p.ROLE,
+              r.RCID, r.NPO_SPCA_ID
+       FROM persons p
+       JOIN rescue_coordinators r ON p.PERSON_ID = r.PERSON_ID
+       WHERE r.NPO_SPCA_ID = ?`,
+      [orgId],
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Organization staff retrieved successfully",
+      organizationId: orgId,
+      managers,
+      rescueCoordinators,
+    });
+  } catch (error) {
+    console.error("Error in getMyORGManagersNdStaff:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
