@@ -82,109 +82,6 @@ export const signupUser = async (req, res) => {
   }
 };
 
-export const registerManager = async (req, res) => {
-  try {
-    const { personId } = req.params;
-    const adminNpoSpcaId = req.user.NPO_SPCA_ID; // IT admin's org ID
-
-    // Check if person exists and is COMMUNITY_MEMBER
-    const [rows] = await pool.query(
-      "SELECT * FROM persons WHERE PERSON_ID = ?",
-      [personId],
-    );
-
-    if (rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Person not found" });
-    }
-
-    const person = rows[0];
-    if (person.ROLE !== "COMMUNITY_MEMBER") {
-      return res.status(400).json({
-        success: false,
-        message: "Only COMMUNITY_MEMBER can be promoted to MANAGER",
-      });
-    }
-
-    // Update role in PERSONS
-    await pool.query("UPDATE persons SET ROLE = ? WHERE PERSON_ID = ?", [
-      "MANAGER",
-      personId,
-    ]);
-
-    // Insert into MANAGER table with IT admin’s NPO_SPCA_ID
-    await pool.query(
-      "INSERT INTO managers (person_id, npo_spca_id) VALUES (?, ?)",
-      [personId, adminNpoSpcaId],
-    );
-
-    return res.status(201).json({
-      success: true,
-      message: "Manager registered successfully",
-      personId,
-      npoSpcaId: adminNpoSpcaId,
-    });
-  } catch (err) {
-    console.error("Manager registration error:", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Error registering manager" });
-  }
-};
-
-export const registerRescueCoordinator = async (req, res) => {
-  try {
-    const { personId } = req.params;
-    const adminNpoSpcaId = req.user.NPO_SPCA_ID; // IT admin’s org ID
-
-    // Check if person exists and is COMMUNITY_MEMBER
-    const [rows] = await pool.query(
-      "SELECT * FROM persons WHERE PERSON_ID = ?",
-      [personId],
-    );
-
-    if (rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Person not found" });
-    }
-
-    const person = rows[0];
-    if (person.ROLE !== "COMMUNITY_MEMBER") {
-      return res.status(400).json({
-        success: false,
-        message: "Only COMMUNITY_MEMBER can be promoted to RESCUE_COORDINATOR",
-      });
-    }
-
-    // Update role in PERSONS
-    await pool.query("UPDATE persons SET ROLE = ? WHERE PERSON_ID = ?", [
-      "RESCUE_COORDINATOR",
-      personId,
-    ]);
-
-    // Insert into RESCUE_COORDINATOR table with IT admin’s NPO_SPCA_ID
-    await pool.query(
-      "INSERT INTO rescue_coordinators (person_id, npo_spca_id) VALUES (?, ?)",
-      [personId, adminNpoSpcaId],
-    );
-
-    return res.status(201).json({
-      success: true,
-      message: "Rescue coordinator registered successfully",
-      personId,
-      npoSpcaId: adminNpoSpcaId,
-    });
-  } catch (err) {
-    console.error("Rescue coordinator registration error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Error registering rescue coordinator",
-    });
-  }
-};
-
 export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
@@ -298,6 +195,154 @@ export const getAllUsers = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+export const registerManager = async (req, res) => {
+  try {
+    const { personId } = req.params;
+    const adminNpoSpcaId = req.user.NPO_SPCA_ID; // IT admin's org ID
+
+    // Check if person exists
+    const [rows] = await pool.query(
+      "SELECT * FROM persons WHERE PERSON_ID = ?",
+      [personId],
+    );
+
+    if (rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Person not found" });
+    }
+
+    const person = rows[0];
+
+    // Allow promotion only if COMMUNITY_MEMBER or already MANAGER
+    if (person.ROLE !== "COMMUNITY_MEMBER" && person.ROLE !== "MANAGER") {
+      return res.status(400).json({
+        success: false,
+        message: "Only COMMUNITY_MEMBER can be promoted to MANAGER",
+      });
+    }
+
+    // Update role in PERSONS if not already MANAGER
+    if (person.ROLE !== "MANAGER") {
+      await pool.query("UPDATE persons SET ROLE = ? WHERE PERSON_ID = ?", [
+        "MANAGER",
+        personId,
+      ]);
+    }
+
+    // Check if manager record exists
+    const [managerRows] = await pool.query(
+      "SELECT * FROM managers WHERE PERSON_ID = ?",
+      [personId],
+    );
+
+    if (managerRows.length > 0) {
+      const manager = managerRows[0];
+      // Update NPO_SPCA_ID if empty/null
+      if (!manager.NPO_SPCA_ID) {
+        await pool.query(
+          "UPDATE managers SET NPO_SPCA_ID = ? WHERE PERSON_ID = ?",
+          [adminNpoSpcaId, personId],
+        );
+      }
+    } else {
+      // Insert new manager record
+      await pool.query(
+        "INSERT INTO managers (person_id, npo_spca_id) VALUES (?, ?)",
+        [personId, adminNpoSpcaId],
+      );
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Manager registered/updated successfully",
+      personId,
+      npoSpcaId: adminNpoSpcaId,
+    });
+  } catch (err) {
+    console.error("Manager registration error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Error registering manager" });
+  }
+};
+
+export const registerRescueCoordinator = async (req, res) => {
+  try {
+    const { personId } = req.params;
+    const adminNpoSpcaId = req.user.NPO_SPCA_ID; // IT admin’s org ID
+
+    // Check if person exists
+    const [rows] = await pool.query(
+      "SELECT * FROM persons WHERE PERSON_ID = ?",
+      [personId],
+    );
+
+    if (rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Person not found" });
+    }
+
+    const person = rows[0];
+
+    // Allow promotion only if COMMUNITY_MEMBER or already RESCUE_COORDINATOR
+    if (
+      person.ROLE !== "COMMUNITY_MEMBER" &&
+      person.ROLE !== "RESCUE_COORDINATOR"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Only COMMUNITY_MEMBER can be promoted to RESCUE_COORDINATOR",
+      });
+    }
+
+    // Update role in PERSONS if not already RESCUE_COORDINATOR
+    if (person.ROLE !== "RESCUE_COORDINATOR") {
+      await pool.query("UPDATE persons SET ROLE = ? WHERE PERSON_ID = ?", [
+        "RESCUE_COORDINATOR",
+        personId,
+      ]);
+    }
+
+    // Check if rescue coordinator record exists
+    const [rcRows] = await pool.query(
+      "SELECT * FROM rescue_coordinators WHERE PERSON_ID = ?",
+      [personId],
+    );
+
+    if (rcRows.length > 0) {
+      const rc = rcRows[0];
+      // Update NPO_SPCA_ID if empty/null
+      if (!rc.NPO_SPCA_ID) {
+        await pool.query(
+          "UPDATE rescue_coordinators SET NPO_SPCA_ID = ? WHERE PERSON_ID = ?",
+          [adminNpoSpcaId, personId],
+        );
+      }
+    } else {
+      // Insert new rescue coordinator record
+      await pool.query(
+        "INSERT INTO rescue_coordinators (person_id, npo_spca_id) VALUES (?, ?)",
+        [personId, adminNpoSpcaId],
+      );
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Rescue coordinator registered/updated successfully",
+      personId,
+      npoSpcaId: adminNpoSpcaId,
+    });
+  } catch (err) {
+    console.error("Rescue coordinator registration error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error registering rescue coordinator",
     });
   }
 };
