@@ -7,10 +7,10 @@
 
 # PET OWNER
 
-- [ ] Register own pet
-- [ ] deletes a pet
-- [ ] updates a pet
-- [ ] Reads all his pets
+- [x] Register own pet
+- [x] deletes a pet
+- [x] updates a pet
+- [x] Reads all his pets
 - [ ] Report a lost pet
 - [ ] updates a found pet status
 - [ ] writes a reunion story
