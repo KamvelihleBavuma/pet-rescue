@@ -21,7 +21,7 @@ export const registerPet = async (req, res) => {
 
       const fileData = await uploadMedia(req.file);
 
-      if (req.file.mimetype.startsWith("image/")) {
+      if (req.file.fieldname === "image") {
         // Insert into PET_IMAGES table
         const [imgResult] = await pool.query(
           "INSERT INTO pet_images (URL, FILEID) VALUES (?, ?)",
@@ -170,26 +170,30 @@ export const updatePet = async (req, res) => {
     if (req.file && hasImageKitConfig) {
       const fileData = await uploadMedia(req.file);
 
-      // If old image exists, delete it
       if (petImageId) {
+        // Update existing image record instead of deleting
         const [imgRows] = await pool.query(
           "SELECT FILEID FROM pet_images WHERE PET_IMAGE_ID = ?",
           [petImageId],
         );
         if (imgRows.length > 0) {
+          // Remove old file from ImageKit
           await deleteMedia(imgRows[0].FILEID);
-          await pool.query("DELETE FROM pet_images WHERE PET_IMAGE_ID = ?", [
-            petImageId,
-          ]);
         }
-      }
 
-      // Insert new image
-      const [imgResult] = await pool.query(
-        "INSERT INTO pet_images (URL, FILEID) VALUES (?, ?)",
-        [fileData.url, fileData.fileId],
-      );
-      petImageId = imgResult.insertId;
+        // Update DB record with new file info
+        await pool.query(
+          "UPDATE pet_images SET URL = ?, FILEID = ? WHERE PET_IMAGE_ID = ?",
+          [fileData.url, fileData.fileId, petImageId],
+        );
+      } else {
+        // Insert new image if none exists
+        const [imgResult] = await pool.query(
+          "INSERT INTO pet_images (URL, FILEID) VALUES (?, ?)",
+          [fileData.url, fileData.fileId],
+        );
+        petImageId = imgResult.insertId;
+      }
     }
 
     // Update pet record

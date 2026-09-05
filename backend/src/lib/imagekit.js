@@ -16,7 +16,7 @@ function hasImageKitConfig() {
 // this helper makes a safe, unique filename for uploaded files.
 function createFileName(originalName = "upload") {
   const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, "_");
-  return `studystream-${Date.now()}-${safeName}`;
+  return `petrescue-${Date.now()}-${safeName}`;
 }
 
 /**
