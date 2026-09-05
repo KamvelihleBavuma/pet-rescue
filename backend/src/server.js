@@ -9,6 +9,7 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import managerRoutes from "./routes/managerRoutes.js";
 import staffRoutes from "./routes/rescueCoordinatorRoutes.js";
+import petOwnerRoutes from "./routes/petOwnerRoutes.js";
 
 const app = express();
 const { PORT } = ENV;
@@ -24,6 +25,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/manager", managerRoutes);
 app.use("/api/staff", staffRoutes);
+app.use("/api/petowner", petOwnerRoutes);
 
 app.listen(PORT, () =>
   console.log(`Server running on http://localhost:${PORT} `),
